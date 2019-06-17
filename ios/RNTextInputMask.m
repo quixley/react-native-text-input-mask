@@ -31,24 +31,24 @@ RCT_EXPORT_METHOD(unmask:(NSString *)maskString inputValue:(NSString *)inputValu
 }
 
 RCT_EXPORT_METHOD(setMask:(nonnull NSNumber *)reactNode mask:(NSString *)mask) {
+    
+    __weak typeof(self) welf = self;
     [self.bridge.uiManager addUIBlock:^(RCTUIManager *uiManager, NSDictionary<NSNumber *, RCTSinglelineTextInputView *> *viewRegistry ) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            RCTSinglelineTextInputView *view = viewRegistry[reactNode];
-            RCTUITextField *textView = [view backedTextInputView];
+        RCTSinglelineTextInputView *view = viewRegistry[reactNode];
+        RCTUITextField *textView = [view backedTextInputView];
 
-            if (!masks) {
-                masks = [[NSMutableDictionary alloc] init];
-            }
+        if (!masks) {
+            masks = [[NSMutableDictionary alloc] init];
+        }
 
-            NSString *key = [NSString stringWithFormat:@"%@", reactNode];
-            MaskedTextFieldDelegate* maskedDelegate = [MaskedTextFieldDelegate new];
-            maskedDelegate.primaryMaskFormat = mask;
-            maskedDelegate.listener = self;
-            masks[key] = maskedDelegate;
-            textView.delegate = masks[key];
+        NSString *key = [NSString stringWithFormat:@"%@", reactNode];
+        MaskedTextFieldDelegate* maskedDelegate = [MaskedTextFieldDelegate new];
+        maskedDelegate.primaryMaskFormat = mask;
+        maskedDelegate.listener = welf;
+        masks[key] = maskedDelegate;
+        textView.delegate = masks[key];
 
-            [self updateTextField:maskedDelegate textView:textView];
-        });
+        [welf updateTextField:maskedDelegate textView:textView];
     }];
 }
 
@@ -91,7 +91,8 @@ RCT_EXPORT_METHOD(setMask:(nonnull NSNumber *)reactNode mask:(NSString *)mask) {
 
 
 - (void)updateTextField:(MaskedTextFieldDelegate *)maskedDelegate textView:(RCTUITextField *)textView {
-    if(textView.attributedText.string.length> 0){
+    
+    if(textView.attributedText.string.length > 0) {
         NSString *originalString = textView.attributedText.string;
         NSString *croppedText = [originalString substringToIndex:[originalString length] -1];
 
